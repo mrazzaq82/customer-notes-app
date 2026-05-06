@@ -1,0 +1,3 @@
+"/add">
+          <div><input name="customer_name" placeholder="Customer Name" required /></div>
+          <div><input name="email" placeholder="Email" /></div>
