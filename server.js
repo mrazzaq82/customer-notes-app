@@ -5,6 +5,10 @@ require("dotenv").config();
 const app = express();
 const port = process.env.APP_PORT || 3000;
 
+const appVersion = process.env.APP_VERSION || "v2.0";
+const environmentName = process.env.ENVIRONMENT_NAME || "Production";
+const deploymentTime = new Date().toLocaleString();
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -68,21 +72,70 @@ app.get("/", async (req, res) => {
           table { border-collapse: collapse; margin-top: 25px; width: 100%; }
           th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
           th { background-color: #f4f4f4; }
+
+          .deployment-banner {
+            padding: 15px;
+            background: #dff0d8;
+            border: 1px solid #b2d8b2;
+            border-radius: 8px;
+            margin-bottom: 20px;
+          }
+
+          .deployment-banner h3 {
+            margin-top: 0;
+            color: #2e6b2e;
+          }
+
+          .deployment-success {
+            color: green;
+            font-weight: bold;
+          }
         </style>
       </head>
       <body>
+
         <h1>Customer Notes App</h1>
-        <p>Node.js application running on VM-Lab and connected to Cloud SQL PostgreSQL.</p>
+
+        <div class="deployment-banner">
+          <h3>Latest Deployment Information</h3>
+
+          <p><strong>Environment:</strong> ${environmentName}</p>
+
+          <p><strong>Application Version:</strong> ${appVersion}</p>
+
+          <p><strong>Deployment Time:</strong> ${deploymentTime}</p>
+
+          <p class="deployment-success">
+            New deployment successfully applied through GitHub Actions CI/CD pipeline
+          </p>
+        </div>
+
+        <p>
+          Node.js application running on VM-Lab and connected to Cloud SQL PostgreSQL.
+        </p>
 
         <form method="POST" action="/add">
-          <div><input name="customer_name" placeholder="Customer Name" required /></div>
-          <div><input name="email" placeholder="Email" /></div>
-          <div><textarea name="home_address" placeholder="Home Address"></textarea></div>
-          <div><textarea name="notes" placeholder="Notes"></textarea></div>
+          <div>
+            <input name="customer_name" placeholder="Customer Name" required />
+          </div>
+
+          <div>
+            <input name="email" placeholder="Email" />
+          </div>
+
+          <div>
+            <textarea name="home_address" placeholder="Home Address"></textarea>
+          </div>
+
+          <div>
+            <textarea name="notes" placeholder="Notes"></textarea>
+          </div>
+
           <button type="submit">Save Customer Note</button>
         </form>
 
         <h2>Saved Records from PostgreSQL</h2>
+
         <table>
           <tr>
             <th>ID</th>
@@ -93,11 +146,14 @@ app.get("/", async (req, res) => {
             <th>Created</th>
             <th>Action</th>
           </tr>
+
           ${rows}
         </table>
+
       </body>
       </html>
     `);
+
   } catch (err) {
     res.status(500).send("Database error: " + err.message);
   }
@@ -108,10 +164,16 @@ app.post("/add", async (req, res) => {
 
   try {
     await pool.query(
-      "INSERT INTO customer_notes (customer_name, email, home_address, notes) VALUES ($1, $2, $3, $4)",
+      `
+      INSERT INTO customer_notes
+      (customer_name, email, home_address, notes)
+      VALUES ($1, $2, $3, $4)
+      `,
       [customer_name, email, home_address, notes]
     );
+
     res.redirect("/");
+
   } catch (err) {
     res.status(500).send("Insert failed: " + err.message);
   }
@@ -119,8 +181,13 @@ app.post("/add", async (req, res) => {
 
 app.post("/delete/:id", async (req, res) => {
   try {
-    await pool.query("DELETE FROM customer_notes WHERE id = $1", [req.params.id]);
+    await pool.query(
+      "DELETE FROM customer_notes WHERE id = $1",
+      [req.params.id]
+    );
+
     res.redirect("/");
+
   } catch (err) {
     res.status(500).send("Delete failed: " + err.message);
   }
@@ -129,9 +196,19 @@ app.post("/delete/:id", async (req, res) => {
 app.get("/health", async (req, res) => {
   try {
     await pool.query("SELECT 1");
-    res.json({ status: "healthy", database: "connected" });
+
+    res.json({
+      status: "healthy",
+      database: "connected",
+      version: appVersion,
+      environment: environmentName
+    });
+
   } catch (err) {
-    res.status(500).json({ status: "unhealthy", error: err.message });
+    res.status(500).json({
+      status: "unhealthy",
+      error: err.message
+    });
   }
 });
 
@@ -139,9 +216,13 @@ initDb()
   .then(() => {
     app.listen(port, () => {
       console.log(`Customer Notes App running on port ${port}`);
+      console.log(`Environment: ${environmentName}`);
+      console.log(`Application Version: ${appVersion}`);
     });
   })
   .catch(err => {
     console.error("Failed to initialize database:", err);
     process.exit(1);
   });
+
+// trigger deployment
