@@ -23,16 +23,22 @@ async function initDb() {
       id SERIAL PRIMARY KEY,
       customer_name VARCHAR(100) NOT NULL,
       email VARCHAR(150),
+      home_address TEXT,
       notes TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+  `);
+
+  await pool.query(`
+    ALTER TABLE customer_notes
+    ADD COLUMN IF NOT EXISTS home_address TEXT;
   `);
 }
 
 app.get("/", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, customer_name, email, notes, created_at FROM customer_notes ORDER BY id DESC"
+      "SELECT id, customer_name, email, home_address, notes, created_at FROM customer_notes ORDER BY id DESC"
     );
 
     const rows = result.rows.map(row => `
@@ -40,6 +46,7 @@ app.get("/", async (req, res) => {
         <td>${row.id}</td>
         <td>${row.customer_name}</td>
         <td>${row.email || ""}</td>
+        <td>${row.home_address || ""}</td>
         <td>${row.notes || ""}</td>
         <td>${row.created_at}</td>
         <td>
@@ -70,6 +77,7 @@ app.get("/", async (req, res) => {
         <form method="POST" action="/add">
           <div><input name="customer_name" placeholder="Customer Name" required /></div>
           <div><input name="email" placeholder="Email" /></div>
+          <div><textarea name="home_address" placeholder="Home Address"></textarea></div>
           <div><textarea name="notes" placeholder="Notes"></textarea></div>
           <button type="submit">Save Customer Note</button>
         </form>
@@ -80,6 +88,7 @@ app.get("/", async (req, res) => {
             <th>ID</th>
             <th>Customer</th>
             <th>Email</th>
+            <th>Home Address</th>
             <th>Notes</th>
             <th>Created</th>
             <th>Action</th>
@@ -95,12 +104,12 @@ app.get("/", async (req, res) => {
 });
 
 app.post("/add", async (req, res) => {
-  const { customer_name, email, notes } = req.body;
+  const { customer_name, email, home_address, notes } = req.body;
 
   try {
     await pool.query(
-      "INSERT INTO customer_notes (customer_name, email, notes) VALUES ($1, $2, $3)",
-      [customer_name, email, notes]
+      "INSERT INTO customer_notes (customer_name, email, home_address, notes) VALUES ($1, $2, $3, $4)",
+      [customer_name, email, home_address, notes]
     );
     res.redirect("/");
   } catch (err) {
@@ -136,4 +145,3 @@ initDb()
     console.error("Failed to initialize database:", err);
     process.exit(1);
   });
-// trigger deployment
