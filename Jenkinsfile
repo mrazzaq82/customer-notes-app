@@ -2,7 +2,6 @@ pipeline {
   agent any
 
   stages {
-
     stage('Build Docker Image') {
       steps {
         sh 'docker build -t customer-notes-app .'
@@ -13,7 +12,6 @@ pipeline {
       steps {
         sh '''
         docker rm -f customer-notes-app || true
-
         docker run -d \
           --name customer-notes-app \
           --restart unless-stopped \
