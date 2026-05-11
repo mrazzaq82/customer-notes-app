@@ -97,7 +97,7 @@ app.get("/", async (req, res) => {
         <h1>Customer Notes App</h1>
 
         <div class="deployment-banner">
-          <h3>Latest Deployment Information with Automation - Dar did that if it fails</h3>
+          <h3>Latest Deployment Information with Automation - Dar did this</h3>
 
           <p><strong>Environment:</strong> ${environmentName}</p>
 
