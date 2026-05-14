@@ -97,7 +97,7 @@ app.get("/", async (req, res) => {
         <h1>Customer Notes App</h1>
 
         <div class="deployment-banner">
-          <h3>Latest Deployment Information with Automation - ArguCD Did the Deployment</h3>
+          <h3>Latest Deployment Information with Automation - ArguCD Did the Deployment took a lot longer</h3>
 
           <p><strong>Environment:</strong> ${environmentName}</p>
 
