@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: customer-notes-app
-        image: us-central1-docker.pkg.dev/project-2a4104fb-d065-46a4-8a3/customer-notes-repo/customer-notes-app:jenkins-66
+        image: us-central1-docker.pkg.dev/project-2a4104fb-d065-46a4-8a3/customer-notes-repo/customer-notes-app:jenkins-67
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
