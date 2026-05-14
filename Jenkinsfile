@@ -1,6 +1,10 @@
 pipeline {
   agent any
 
+  options {
+    disableConcurrentBuilds()
+  }
+
   environment {
     PROJECT_ID = 'project-2a4104fb-d065-46a4-8a3'
     REGION = 'us-central1'
@@ -30,14 +34,14 @@ pipeline {
       }
     }
 
-stage('Update Kubernetes Manifest') {
-  steps {
-    sh '''
-    echo "Updating k8s/deployment.yaml with new image tag and APP_VERSION..."
+    stage('Update Kubernetes Manifest') {
+      steps {
+        sh '''
+        echo "Updating k8s/deployment.yaml with new image tag and APP_VERSION..."
 
-    sed -i "s|image: .*customer-notes-app:.*|image: $IMAGE_URI|" k8s/deployment.yaml
+        sed -i "s|image: .*customer-notes-app:.*|image: $IMAGE_URI|" k8s/deployment.yaml
 
-    python3 - <<PY
+        python3 - <<PY
 from pathlib import Path
 
 path = Path("k8s/deployment.yaml")
@@ -52,15 +56,17 @@ for i, line in enumerate(lines):
 path.write_text("\\n".join(lines) + "\\n")
 PY
 
-    git config user.email "jenkins@vm-lab1.local"
-    git config user.name "Jenkins CI"
+        git config user.email "jenkins@vm-lab1.local"
+        git config user.name "Jenkins CI"
 
-    git add k8s/deployment.yaml
-    git commit -m "[skip ci] Update Kubernetes image to $IMAGE_TAG" || echo "No changes to commit"
+        git add k8s/deployment.yaml
+        git commit -m "[skip ci] Update Kubernetes image to $IMAGE_TAG" || echo "No changes to commit"
 
-    git checkout -B main
-    git pull --rebase origin main
-    git push origin HEAD:main
-    '''
+        git checkout -B main
+        git pull --rebase origin main
+        git push origin HEAD:main
+        '''
+      }
+    }
   }
 }
