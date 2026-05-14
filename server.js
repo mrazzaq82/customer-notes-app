@@ -39,11 +39,13 @@ async function initDb() {
   `);
 }
 
-app.get("/", async (req, res) => {
+async function homeHandler(req, res) {
   try {
     const result = await pool.query(
       "SELECT id, customer_name, email, home_address, notes, created_at FROM customer_notes ORDER BY id DESC"
     );
+
+    const basePath = req.path.startsWith("/gke") ? "/gke" : "";
 
     const rows = result.rows.map(row => `
       <tr>
@@ -54,7 +56,7 @@ app.get("/", async (req, res) => {
         <td>${row.notes || ""}</td>
         <td>${row.created_at}</td>
         <td>
-          <form method="POST" action="/delete/${row.id}">
+          <form method="POST" action="${basePath}/delete/${row.id}">
             <button type="submit">Delete</button>
           </form>
         </td>
@@ -72,7 +74,6 @@ app.get("/", async (req, res) => {
           table { border-collapse: collapse; margin-top: 25px; width: 100%; }
           th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
           th { background-color: #f4f4f4; }
-
           .deployment-banner {
             padding: 15px;
             background: #dff0d8;
@@ -80,12 +81,10 @@ app.get("/", async (req, res) => {
             border-radius: 8px;
             margin-bottom: 20px;
           }
-
           .deployment-banner h3 {
             margin-top: 0;
             color: #2e6b2e;
           }
-
           .deployment-success {
             color: green;
             font-weight: bold;
@@ -93,44 +92,27 @@ app.get("/", async (req, res) => {
         </style>
       </head>
       <body>
-
         <h1>Customer Notes App</h1>
 
         <div class="deployment-banner">
-          <h3>Latest Deployment Information with Automation - ArguCD Did the Deployment took a lot longer</h3>
-
+          <h3>Latest Deployment Information - Jenkins, Artifact Registry, ArgoCD, and GKE</h3>
           <p><strong>Environment:</strong> ${environmentName}</p>
-
           <p><strong>Application Version:</strong> ${appVersion}</p>
-
           <p><strong>Deployment Time:</strong> ${deploymentTime}</p>
-
           <p class="deployment-success">
-            New deployment successfully applied through GitHub Actions CI/CD pipeline
+            Deployment successfully applied through Jenkins CI, Artifact Registry, ArgoCD, and GKE.
           </p>
         </div>
 
         <p>
-          Node.js application running on VM-Lab and connected to Cloud SQL PostgreSQL.
+          Node.js application running on GKE and connected to Cloud SQL PostgreSQL.
         </p>
 
-        <form method="POST" action="/add">
-          <div>
-            <input name="customer_name" placeholder="Customer Name" required />
-          </div>
-
-          <div>
-            <input name="email" placeholder="Email" />
-          </div>
-
-          <div>
-            <textarea name="home_address" placeholder="Home Address"></textarea>
-          </div>
-
-          <div>
-            <textarea name="notes" placeholder="Notes"></textarea>
-          </div>
-
+        <form method="POST" action="${basePath}/add">
+          <div><input name="customer_name" placeholder="Customer Name" required /></div>
+          <div><input name="email" placeholder="Email" /></div>
+          <div><textarea name="home_address" placeholder="Home Address"></textarea></div>
+          <div><textarea name="notes" placeholder="Notes"></textarea></div>
           <button type="submit">Save Customer Note</button>
         </form>
 
@@ -146,10 +128,8 @@ app.get("/", async (req, res) => {
             <th>Created</th>
             <th>Action</th>
           </tr>
-
           ${rows}
         </table>
-
       </body>
       </html>
     `);
@@ -157,10 +137,11 @@ app.get("/", async (req, res) => {
   } catch (err) {
     res.status(500).send("Database error: " + err.message);
   }
-});
+}
 
-app.post("/add", async (req, res) => {
+async function addHandler(req, res) {
   const { customer_name, email, home_address, notes } = req.body;
+  const basePath = req.path.startsWith("/gke") ? "/gke" : "";
 
   try {
     await pool.query(
@@ -172,27 +153,30 @@ app.post("/add", async (req, res) => {
       [customer_name, email, home_address, notes]
     );
 
-    res.redirect("/");
+    res.redirect(`${basePath}/`);
 
   } catch (err) {
     res.status(500).send("Insert failed: " + err.message);
   }
-});
+}
 
-app.post("/delete/:id", async (req, res) => {
+async function deleteHandler(req, res) {
+  const basePath = req.path.startsWith("/gke") ? "/gke" : "";
+
   try {
     await pool.query(
       "DELETE FROM customer_notes WHERE id = $1",
       [req.params.id]
     );
 
-    res.redirect("/");
+    res.redirect(`${basePath}/`);
 
   } catch (err) {
     res.status(500).send("Delete failed: " + err.message);
   }
-});
-app.get("/health", async (req, res) => {
+}
+
+async function healthHandler(req, res) {
   try {
     await pool.query("SELECT 1");
 
@@ -209,26 +193,21 @@ app.get("/health", async (req, res) => {
       error: err.message
     });
   }
-});
+}
 
-app.get("/gke/health", async (req, res) => {
-  try {
-    await pool.query("SELECT 1");
+app.get("/", homeHandler);
+app.get("/gke", homeHandler);
+app.get("/gke/", homeHandler);
 
-    res.json({
-      status: "healthy",
-      database: "connected",
-      version: appVersion,
-      environment: environmentName
-    });
+app.post("/add", addHandler);
+app.post("/gke/add", addHandler);
 
-  } catch (err) {
-    res.status(500).json({
-      status: "unhealthy",
-      error: err.message
-    });
-  }
-});
+app.post("/delete/:id", deleteHandler);
+app.post("/gke/delete/:id", deleteHandler);
+
+app.get("/health", healthHandler);
+app.get("/gke/health", healthHandler);
+
 initDb()
   .then(() => {
     app.listen(port, () => {
@@ -241,5 +220,3 @@ initDb()
     console.error("Failed to initialize database:", err);
     process.exit(1);
   });
-
-// trigger deployment
