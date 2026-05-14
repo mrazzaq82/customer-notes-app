@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: customer-notes-app
-        image: us-central1-docker.pkg.dev/project-2a4104fb-d065-46a4-8a3/customer-notes-repo/customer-notes-app:jenkins-96
+        image: us-central1-docker.pkg.dev/project-2a4104fb-d065-46a4-8a3/customer-notes-repo/customer-notes-app:jenkins-97
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
@@ -25,7 +25,7 @@ spec:
         - name: APP_PORT
           value: "3000"
         - name: APP_VERSION
-          value: "jenkins-96"
+          value: "jenkins-97"
         - name: DB_HOST
           valueFrom:
             secretKeyRef:
