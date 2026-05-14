@@ -40,11 +40,12 @@ pipeline {
         git config user.email "jenkins@vm-lab1.local"
         git config user.name "Jenkins CI"
 
-        git add k8s/deployment.yaml
-        git commit -m "Update Kubernetes image to $IMAGE_TAG" || echo "No changes to commit"
+      git add k8s/deployment.yaml
+git commit -m "Update Kubernetes image to $IMAGE_TAG" || echo "No changes to commit"
 
-        git pull --rebase origin main
-        git push origin main
+git checkout -B main
+git pull --rebase origin main
+git push origin HEAD:main
         '''
       }
     }
