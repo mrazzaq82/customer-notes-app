@@ -192,7 +192,6 @@ app.post("/delete/:id", async (req, res) => {
     res.status(500).send("Delete failed: " + err.message);
   }
 });
-
 app.get("/health", async (req, res) => {
   try {
     await pool.query("SELECT 1");
@@ -212,6 +211,24 @@ app.get("/health", async (req, res) => {
   }
 });
 
+app.get("/gke/health", async (req, res) => {
+  try {
+    await pool.query("SELECT 1");
+
+    res.json({
+      status: "healthy",
+      database: "connected",
+      version: appVersion,
+      environment: environmentName
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      status: "unhealthy",
+      error: err.message
+    });
+  }
+});
 initDb()
   .then(() => {
     app.listen(port, () => {
