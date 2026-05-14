@@ -30,24 +30,37 @@ pipeline {
       }
     }
 
-    stage('Update Kubernetes Manifest') {
-      steps {
-        sh '''
-        echo "Updating k8s/deployment.yaml with new image tag..."
+stage('Update Kubernetes Manifest') {
+  steps {
+    sh '''
+    echo "Updating k8s/deployment.yaml with new image tag and APP_VERSION..."
 
-        sed -i "s|image: .*customer-notes-app:.*|image: $IMAGE_URI|" k8s/deployment.yaml
+    sed -i "s|image: .*customer-notes-app:.*|image: $IMAGE_URI|" k8s/deployment.yaml
 
-        git config user.email "jenkins@vm-lab1.local"
-        git config user.name "Jenkins CI"
+    python3 - <<PY
+from pathlib import Path
 
-      git add k8s/deployment.yaml
-git commit -m "Update Kubernetes image to $IMAGE_TAG" || echo "No changes to commit"
+path = Path("k8s/deployment.yaml")
+text = path.read_text()
+lines = text.splitlines()
 
-git checkout -B main
-git pull --rebase origin main
-git push origin HEAD:main
-        '''
-      }
-    }
+for i, line in enumerate(lines):
+    if line.strip() == "- name: APP_VERSION":
+        lines[i + 1] = '          value: "' + "${IMAGE_TAG}" + '"'
+        break
+
+path.write_text("\\n".join(lines) + "\\n")
+PY
+
+    git config user.email "jenkins@vm-lab1.local"
+    git config user.name "Jenkins CI"
+
+    git add k8s/deployment.yaml
+    git commit -m "[skip ci] Update Kubernetes image to $IMAGE_TAG" || echo "No changes to commit"
+
+    git checkout -B main
+    git pull --rebase origin main
+    git push origin HEAD:main
+    '''
   }
 }
