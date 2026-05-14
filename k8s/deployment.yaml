@@ -25,7 +25,7 @@ spec:
         - name: APP_PORT
           value: "3000"
         - name: APP_VERSION
-          value: "jenkins-37"
+          value: ""
         - name: DB_HOST
           valueFrom:
             secretKeyRef:
