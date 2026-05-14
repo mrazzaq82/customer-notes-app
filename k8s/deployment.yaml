@@ -1,1 +1,63 @@
-
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-notes-app
+  namespace: customer-notes
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: customer-notes-app
+  template:
+    metadata:
+      labels:
+        app: customer-notes-app
+    spec:
+      containers:
+      - name: customer-notes-app
+        image: us-central1-docker.pkg.dev/project-2a4104fb-d065-46a4-8a3/customer-notes-repo/customer-notes-app:v1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: APP_PORT
+          value: "3000"
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: customer-notes-db-secret
+              key: DB_HOST
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              name: customer-notes-db-secret
+              key: DB_PORT
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: customer-notes-db-secret
+              key: DB_NAME
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: customer-notes-db-secret
+              key: DB_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: customer-notes-db-secret
+              key: DB_PASSWORD
+        - name: DB_SSL
+          valueFrom:
+            secretKeyRef:
+              name: customer-notes-db-secret
+              key: DB_SSL
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "25m"
+          limits:
+            memory: "128Mi"
+            cpu: "150m"

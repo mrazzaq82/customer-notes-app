@@ -1,1 +1,15 @@
-
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer-notes-service
+  namespace: customer-notes
+  annotations:
+    cloud.google.com/neg: '{"exposed_ports": {"80":{"name": "customer-notes-neg"}}}'
+spec:
+  type: ClusterIP
+  selector:
+    app: customer-notes-app
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3000
